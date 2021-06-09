@@ -2,6 +2,8 @@ import cv2
 import os
 import pandas as pd
 import numpy as np
+import warnings
+
 
 class Labels:
 
@@ -18,15 +20,15 @@ class Labels:
             if os.path.isfile(Labels.label_filename):
                 print("Label file exists.")
                 self.label_file_exist = True
-                self.label_df = pd.read_csv(Labels.label_filename)
-                self.image_filenames = list(self.label_df['filename'])
-                self.num_images = len(self.label_df)
-                if len(self.label_df.columns) > 1:
-                    for column in self.label_df.columns:
+                self.df = pd.read_csv(Labels.label_filename)
+                self.image_filenames = list(self.df['filename'])
+                self.num_images = len(self.df)
+                if len(self.df.columns) > 1:
+                    for column in self.df.columns:
                         if column == 'filename':
                             print(f"... { self.num_images } total images in directory")
                         else:
-                            num_completed_labels = self.label_df[column].notnull().sum()
+                            num_completed_labels = self.df[column].notnull().sum()
                             if num_completed_labels == self.num_images:
                                 complete_tag = 'COMPLETE'
                             else:
@@ -36,11 +38,11 @@ class Labels:
             else:
                 print("Label file does not exist... creating CSV of filenames now.")
                 self.image_filenames = self.get_filenames()
-                self.label_df = self.create_label_file()
+                self.df = self.create_label_file()
                 self.label_file_exist = True
                 print("...", len(self.image_filenames), "images found in folder.")
         else:
-            print("Error: directory not found.")
+            warnings.warn("Error: directory not found.")
 
     def get_filenames(self):
         imgs = []
@@ -53,30 +55,47 @@ class Labels:
 
     def create_label(self, label_name):
 
+        if not self.label_file_exist:  # make sure the label csv file exists in the folder
+            self.df = self.create_label_file()
+
+        if label_name in self.df.columns:  # make sure the label column does NOT exist
+            warnings.warn("Error: label file already exists. Either delete, or resume label.")
+            return
+
+        label_df = self.df[['filename']].copy()
+        label_df[label_name] = np.nan
+        label_df = self.display_images_for_labeling(label_df)
+        self.df[label_name] = label_df[label_name]
+        self.save_label_file()
+
+        print(f"Label { label_name } saved.")
+
+    def resume_label(self, label_name):
+
         if self.label_file_exist:
-            self.label_df[label_name] = self.display_images_for_labeling()
+            label_df = self.df[['filename', label_name]].copy()
+            self.df[label_name] = self.display_images_for_labeling(label_df)[label_name]
             self.save_label_file()
+
         else:
-            self.label_df = self.create_label_file()
-            self.label_df[label_name] = self.display_images_for_labeling()
-            self.save_label_file()
+            print("Error: no label file exists.")
 
     def create_label_file(self):
 
         return pd.DataFrame(self.image_filenames, columns=['filename'])
 
-    def display_images_for_labeling(self):
+    def display_images_for_labeling(self, labels_df):
 
-        labels = np.empty(len(self.label_df)) * np.nan
-        #labels[:] = np.nan
         end_loop = False
+        label_column = labels_df.columns[1]
 
-        print("k: TRUE, j: FALSE, s: SAVE, esc: EXIT (without save)")
+        print("k: TRUE, j: FALSE, esc: EXIT AND SAVE")
 
-        for row in range(0, len(self.label_df)):
+        rows_with_nan = [index for index, row in labels_df.iterrows() if row.isnull().any()]
+        for row in rows_with_nan:
 
-            I = cv2.imread(os.path.join(self.path, self.label_df['filename'][row]))
-            filename = self.label_df['filename'][row]
+            I = cv2.imread(os.path.join(self.path, self.df['filename'][row]))
+            filename = self.df['filename'][row]
 
             if I.shape[0] > 600:
                 percent_redux = round(600 / I.shape[0], 2)
@@ -92,14 +111,11 @@ class Labels:
                     keep_image_displayed = False
                     end_loop = True
                 elif k == 102:  # f
-                    labels[row] = 1
+                    labels_df.at[row, label_column] = 1
                     keep_image_displayed = False
                 elif k == 106:  # j
-                    labels[row] = 0
+                    labels_df.at[row, label_column] = 0
                     keep_image_displayed = False
-                # elif k == 115:  # s
-                #    temp = labels
-                #    keep_image_displayed = False
                 elif k == -1:
                     keep_image_displayed = True
                 else:
@@ -108,22 +124,26 @@ class Labels:
 
             cv2.destroyAllWindows()
             if end_loop:
-                print(pd.Series(labels))
-                return labels
+                return labels_df
 
-        return labels
+        return labels_df
 
     def delete_label(self, label_name=[]):
 
-        self.label_df = self.label_df.drop(columns=label_name)
+        val = input(f"Are you sure you want to delete the { ', '.join(label_name)} label columns? (Y/N): ")
+        if val == "Y":
+            self.df = self.df.drop(columns=label_name)
+            self.save_label_file()
+        else:
+            pass
 
     def save_label_file(self):
 
-        self.label_df.to_csv(Labels.label_filename, index=False)
+        self.df.to_csv(Labels.label_filename, index=False)
 
 
 if __name__ == '__main__':
     c = Labels(path='YOUR_PATH_HERE')
-    c.create_label(label_name='Misc')
-    #c.delete_label(['Misc', 'Color'])
-    print(c.label_df)
+    c.create_label('isFace')
+    c.resume_label('isFace')
+    print(c.df)
