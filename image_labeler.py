@@ -4,9 +4,6 @@ import pandas as pd
 
 
 class Labels:
-    """
-    path: give the class a full path to the folder containing your image files
-    """
 
     label_filename = "labels.csv"
 
@@ -20,11 +17,15 @@ class Labels:
             os.chdir(path)
             if os.path.isfile(Labels.label_filename):
                 print("Label file exists.")
-                self.label_file_exist = False
+                self.label_file_exist = True
+                self.label_df = pd.read_csv(Labels.label_filename)
+                self.image_filenames = list(self.label_df['filename'])
+
             else:
                 print("Label file does not exist... creating CSV of filenames now.")
                 self.image_filenames = self.get_filenames()
                 self.label_df = self.create_label_file()
+                self.label_file_exist = True
                 print("...", len(self.image_filenames), "images found in folder.")
         else:
             print("Error: directory not found.")
@@ -41,7 +42,8 @@ class Labels:
     def create_label(self, label_name):
 
         if self.label_file_exist:
-            pass
+            self.label_df[label_name] = self.display_images_for_labeling()
+            self.save_label_file()
         else:
             self.label_df = self.create_label_file()
             self.label_df[label_name] = self.display_images_for_labeling()
@@ -95,14 +97,8 @@ class Labels:
 
         self.label_df.to_csv(Labels.label_filename, index=False)
 
-    # df = pd.dataFrame(imgs_filenames, columns=['filename'])
-    #
-    #
-    # def add_label_column(df, label):
-
-
 
 if __name__ == '__main__':
-    c = Labels(path='/Users/pegors/Documents/Logos/APU/')
-    c.create_label(label_name='Color')
+    c = Labels(path='YOUR_PATH_HERE')
+    c.create_label(label_name='Misc')
     print(c.label_df)
