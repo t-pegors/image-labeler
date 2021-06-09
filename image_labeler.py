@@ -1,7 +1,7 @@
 import cv2
 import os
 import pandas as pd
-
+import numpy as np
 
 class Labels:
 
@@ -20,6 +20,18 @@ class Labels:
                 self.label_file_exist = True
                 self.label_df = pd.read_csv(Labels.label_filename)
                 self.image_filenames = list(self.label_df['filename'])
+                self.num_images = len(self.label_df)
+                if len(self.label_df.columns) > 1:
+                    for column in self.label_df.columns:
+                        if column == 'filename':
+                            print(f"... { self.num_images } total images in directory")
+                        else:
+                            num_completed_labels = self.label_df[column].notnull().sum()
+                            if num_completed_labels == self.num_images:
+                                complete_tag = 'COMPLETE'
+                            else:
+                                complete_tag = 'INCOMPLETE'
+                            print(f"...... { column } is { complete_tag }. ({ num_completed_labels }/{ self.num_images })")
 
             else:
                 print("Label file does not exist... creating CSV of filenames now.")
@@ -55,8 +67,12 @@ class Labels:
 
     def display_images_for_labeling(self):
 
-        labels = []
+        labels = np.empty(len(self.label_df)) * np.nan
+        #labels[:] = np.nan
         end_loop = False
+
+        print("k: TRUE, j: FALSE, s: SAVE, esc: EXIT (without save)")
+
         for row in range(0, len(self.label_df)):
 
             I = cv2.imread(os.path.join(self.path, self.label_df['filename'][row]))
@@ -76,11 +92,14 @@ class Labels:
                     keep_image_displayed = False
                     end_loop = True
                 elif k == 102:  # f
-                    labels.append(1)
+                    labels[row] = 1
                     keep_image_displayed = False
                 elif k == 106:  # j
-                    labels.append(0)
+                    labels[row] = 0
                     keep_image_displayed = False
+                # elif k == 115:  # s
+                #    temp = labels
+                #    keep_image_displayed = False
                 elif k == -1:
                     keep_image_displayed = True
                 else:
@@ -89,9 +108,14 @@ class Labels:
 
             cv2.destroyAllWindows()
             if end_loop:
-                break
+                print(pd.Series(labels))
+                return labels
 
         return labels
+
+    def delete_label(self, label_name=[]):
+
+        self.label_df = self.label_df.drop(columns=label_name)
 
     def save_label_file(self):
 
@@ -101,4 +125,5 @@ class Labels:
 if __name__ == '__main__':
     c = Labels(path='YOUR_PATH_HERE')
     c.create_label(label_name='Misc')
+    #c.delete_label(['Misc', 'Color'])
     print(c.label_df)
