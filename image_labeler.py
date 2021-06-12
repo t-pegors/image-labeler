@@ -118,7 +118,7 @@ class Labels:
                     keep_image_displayed = False
                     end_loop = True
                 elif k == 102:  # f
-                    labels_df.at[row, label_column] = 5
+                    labels_df.at[row, label_column] = 1
                     keep_image_displayed = False
                 elif k == 106:  # j
                     labels_df.at[row, label_column] = 0
