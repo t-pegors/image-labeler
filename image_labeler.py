@@ -66,6 +66,7 @@ class Labels:
         label_df[label_name] = np.nan
         label_df = self.display_images_for_labeling(label_df)
         self.df[label_name] = label_df[label_name]
+        self.remove_bad_images(label_name)
         self.save_label_file()
 
         print(f"Label { label_name } saved.")
@@ -75,6 +76,7 @@ class Labels:
         if self.label_file_exist:
             label_df = self.df[['filename', label_name]].copy()
             self.df[label_name] = self.display_images_for_labeling(label_df)[label_name]
+            self.remove_bad_images(label_name)
             self.save_label_file()
 
         else:
@@ -94,7 +96,12 @@ class Labels:
         rows_with_nan = [index for index, row in labels_df.iterrows() if row.isnull().any()]
         for row in rows_with_nan:
 
-            I = cv2.imread(os.path.join(self.path, self.df['filename'][row]))
+            try:
+                I = cv2.imread(os.path.join(self.path, self.df['filename'][row]))
+            except:
+                labels_df.at[row, label_column] = 5  # mark for removal
+                continue  # skip to the next iteration
+
             filename = self.df['filename'][row]
 
             if I.shape[0] > 600:
@@ -111,7 +118,7 @@ class Labels:
                     keep_image_displayed = False
                     end_loop = True
                 elif k == 102:  # f
-                    labels_df.at[row, label_column] = 1
+                    labels_df.at[row, label_column] = 5
                     keep_image_displayed = False
                 elif k == 106:  # j
                     labels_df.at[row, label_column] = 0
@@ -141,9 +148,23 @@ class Labels:
 
         self.df.to_csv(Labels.label_filename, index=False)
 
+    def remove_bad_images(self, label_file):
+
+        bad_files = list(self.df.loc[self.df[label_file] == 5, 'filename'])
+        if bad_files:
+            idxs = self.df[self.df[label_file] == 5].index  # bad images
+            self.df.drop(idxs, inplace=True)  # remove bad images from csv
+
+            if not os.path.isdir('bad_images'):
+                os.mkdir('bad_images')
+
+            for file in bad_files:
+                print(os.path.join(self.path, 'ffbad_images', file))
+                os.replace(os.path.join(self.path, file), os.path.join(self.path, 'bad_images', file))
+
 
 if __name__ == '__main__':
     c = Labels(path='YOUR_PATH_HERE')
     c.create_label('isFace')
-    c.resume_label('isFace')
+    #c.resume_label('isFace')
     print(c.df)
