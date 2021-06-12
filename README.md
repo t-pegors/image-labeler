@@ -21,7 +21,14 @@ Each image will pop up, use the following keystrokes:
 
 When labeling is complete, the label csv file will automatically be updated and save to the image folder as "labels.csv"
 
-### UPCOMING FEATURES
+### Resume labeling:
 
-- delete labels
-- continue labeling (so you don't have to do all images in one sitting)
+`c.resume_label(label_name='Face_Present')`
+
+Will pick up where you left off labeling and feed you just the images that haven't yet been labeled.
+
+### Delete label:
+
+`c.delete_label(label_name=['Face_Present', 'Dog_Present']`
+
+Pass a list of column names to remove from the labels.csv file.
