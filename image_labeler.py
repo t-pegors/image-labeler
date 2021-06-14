@@ -12,7 +12,7 @@ class Labels:
     def __init__(self, path):
 
         self.path = path
-        self.valid_images = [".jpg", ".gif", ".png"]
+        self.valid_images = [".jpg", ".jpeg", ".gif", ".png"]
         self.label_file_exist = False
 
         if os.path.isdir(path):
@@ -53,7 +53,7 @@ class Labels:
             imgs.append(f)
         return imgs
 
-    def create_label(self, label_name):
+    def create_label(self, label_name,counter):
 
         if not self.label_file_exist:  # make sure the label csv file exists in the folder
             self.df = self.create_label_file()
@@ -64,18 +64,18 @@ class Labels:
 
         label_df = self.df[['filename']].copy()
         label_df[label_name] = np.nan
-        label_df = self.display_images_for_labeling(label_df)
+        label_df = self.display_images_for_labeling(label_df,counter)
         self.df[label_name] = label_df[label_name]
         self.remove_bad_images(label_name)
         self.save_label_file()
 
         print(f"Label { label_name } saved.")
 
-    def resume_label(self, label_name):
+    def resume_label(self, label_name, counter=False):
 
         if self.label_file_exist:
             label_df = self.df[['filename', label_name]].copy()
-            self.df[label_name] = self.display_images_for_labeling(label_df)[label_name]
+            self.df[label_name] = self.display_images_for_labeling(label_df,counter)[label_name]
             self.remove_bad_images(label_name)
             self.save_label_file()
 
@@ -86,12 +86,13 @@ class Labels:
 
         return pd.DataFrame(self.image_filenames, columns=['filename'])
 
-    def display_images_for_labeling(self, labels_df):
+    def display_images_for_labeling(self, labels_df, counter):
 
         end_loop = False
         label_column = labels_df.columns[1]
+        total_imgs = len(labels_df)
 
-        print("k: TRUE, j: FALSE, esc: EXIT AND SAVE")
+        print("f: TRUE, j: FALSE, esc: EXIT AND SAVE")
 
         rows_with_nan = [index for index, row in labels_df.iterrows() if row.isnull().any()]
         for row in rows_with_nan:
@@ -120,9 +121,13 @@ class Labels:
                 elif k == 102:  # f
                     labels_df.at[row, label_column] = 1
                     keep_image_displayed = False
+                    if counter:
+                        print(f"... { str(labels_df[label_column].notnull().sum()) } / { str(total_imgs) } images given { label_column } label.")
                 elif k == 106:  # j
                     labels_df.at[row, label_column] = 0
                     keep_image_displayed = False
+                    if counter:
+                        print(f"... { str(labels_df[label_column].notnull().sum()) } / { str(total_imgs) } images given { label_column } label.")
                 elif k == -1:
                     keep_image_displayed = True
                 else:
@@ -159,12 +164,12 @@ class Labels:
                 os.mkdir('bad_images')
 
             for file in bad_files:
-                print(os.path.join(self.path, 'ffbad_images', file))
+                print(os.path.join(self.path, 'bad_images', file))
                 os.replace(os.path.join(self.path, file), os.path.join(self.path, 'bad_images', file))
 
 
 if __name__ == '__main__':
-    c = Labels(path='YOUR_PATH_HERE')
-    c.create_label('isFace')
-    #c.resume_label('isFace')
+    c = Labels(path='/Users/pegors/Documents/Logos/APU')
+    c.create_label('Again6', counter=True)
+    #c.resume_label('isFace', counter=True)
     print(c.df)
