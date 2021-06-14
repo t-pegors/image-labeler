@@ -14,18 +14,19 @@ If there is no label csv file, one will be created that holds the current list o
 
 ### Create a series of Labels:
 
-`c.create_label(label_name='Face_Present')`
+`c.create_label(label_name='Face_Present', counter=True)`
 
 Each image will pop up, use the following keystrokes:
 * "f" = 1
 * "j" = 0
 * esc = exit labeling (will save progress upon exit)
 
+If counter = True, a command line counter will show you how many labels out of the total you have completed.
 When labeling is complete, the label csv file will automatically be updated and save to the image folder as "labels.csv"
 
 ### Resume labeling:
 
-`c.resume_label(label_name='Face_Present')`
+`c.resume_label(label_name='Face_Present', counter=True)`
 
 Will pick up where you left off labeling and feed you just the images that haven't yet been labeled.
 
