@@ -169,7 +169,7 @@ class Labels:
 
 
 if __name__ == '__main__':
-    c = Labels(path='/Users/pegors/Documents/Logos/APU')
-    c.create_label('Again6', counter=True)
-    #c.resume_label('isFace', counter=True)
-    print(c.df)
+    c = Labels(path='YOUR_PATH_HERE')
+    c.create_label('Face', counter=True)
+    #c.resume_label('Face', counter=True)
+    #print(c.df)
