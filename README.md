@@ -4,6 +4,8 @@ A quick and easy way to manually assign binary labels to image files. Using cv2,
 
 Give this class a folder location with all your images, use the class methods to add labels.  (for ML classification or general "Did I find what I was looking for?" questions.)
 
+Any images that error out on imread will be marked, and on save, will be removed from the csv file and moved to a "bad_images" folder.
+
 ### Define the Class:
 
 `c = Labels(path='YOUR_PATH_HERE')`
@@ -12,11 +14,11 @@ If there is no label csv file, one will be created that holds the current list o
 
 ### Create a series of Labels:
 
-'c.create_label(label_name='Face_Present')'
+`c.create_label(label_name='Face_Present')`
 
 Each image will pop up, use the following keystrokes:
-* f = 1
-* j = 0
+* "f" = 1
+* "j" = 0
 * esc = exit labeling (will save progress upon exit)
 
 When labeling is complete, the label csv file will automatically be updated and save to the image folder as "labels.csv"
