@@ -35,3 +35,9 @@ Will pick up where you left off labeling and feed you just the images that haven
 `c.delete_label(label_name=['Face_Present', 'Dog_Present']`
 
 Pass a list of column names to remove from the labels.csv file.
+
+### Summary:
+
+`c.summary()`
+
+This method is run automatically when the class is instantiated. It lists all label columns, whether they are completed (if not, how many labels have been completed), and it breaks down for each label column, how many of each true / false label.
