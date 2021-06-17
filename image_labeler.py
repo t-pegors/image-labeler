@@ -24,17 +24,7 @@ class Labels:
                 self.image_filenames = list(self.df['filename'])
                 self.num_images = len(self.df)
                 if len(self.df.columns) > 1:
-                    for column in self.df.columns:
-                        if column == 'filename':
-                            print(f"... { self.num_images } total images in directory")
-                        else:
-                            num_completed_labels = self.df[column].notnull().sum()
-                            if num_completed_labels == self.num_images:
-                                complete_tag = 'COMPLETE'
-                            else:
-                                complete_tag = 'INCOMPLETE'
-                            print(f"...... { column } is { complete_tag }. ({ num_completed_labels }/{ self.num_images })")
-
+                    self.summary()
             else:
                 print("Label file does not exist... creating CSV of filenames now.")
                 self.image_filenames = self.get_filenames()
@@ -62,6 +52,7 @@ class Labels:
             warnings.warn("Error: label file already exists. Either delete, or resume label.")
             return
 
+        print(f'\n\n -+-+ Creating Label: {label_name} +-+- \n\n')
         label_df = self.df[['filename']].copy()
         label_df[label_name] = np.nan
         label_df = self.display_images_for_labeling(label_df,counter)
@@ -74,6 +65,7 @@ class Labels:
     def resume_label(self, label_name, counter=False):
 
         if self.label_file_exist:
+            print(f'\n\n -+-+ Resuming Label: {label_name} +-+- \n\n')
             label_df = self.df[['filename', label_name]].copy()
             self.df[label_name] = self.display_images_for_labeling(label_df,counter)[label_name]
             self.remove_bad_images(label_name)
@@ -149,6 +141,31 @@ class Labels:
         else:
             pass
 
+    def summary(self):
+
+        if not self.label_file_exist:
+            print('Error: no label file exists.')
+        else:
+            if len(self.df.columns) == 1:
+                print('No label columns in file.')
+            else:
+                print('SUMMARY:')
+                for column in self.df.columns:
+                    if column == 'filename':
+                        print(f"{self.num_images} total images in directory")
+                    else:
+                        num_completed_labels = self.df[column].notnull().sum()
+                        num_0 = (self.df[column] == 0).sum()
+                        num_1 = (self.df[column] == 1).sum()
+                        if num_completed_labels == self.num_images:
+                            complete_tag = 'COMPLETE'
+                            complete_string = ''
+                        else:
+                            complete_tag = 'INCOMPLETE'
+                            complete_string = f'({num_completed_labels}/{self.num_images})'
+                        print(f"... {column} \t labels are {complete_tag}. {complete_string}")
+                        print(f"    \t TRUE(1) count: {num_1}  \t  FALSE(0): {num_0}")
+
     def save_label_file(self):
 
         self.df.to_csv(Labels.label_filename, index=False)
@@ -170,6 +187,6 @@ class Labels:
 
 if __name__ == '__main__':
     c = Labels(path='YOUR_PATH_HERE')
-    c.create_label('Face', counter=True)
+    #c.create_label('Face', counter=True)
     #c.resume_label('Face', counter=True)
     #print(c.df)
