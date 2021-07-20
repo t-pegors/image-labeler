@@ -32,9 +32,17 @@ Will pick up where you left off labeling and feed you just the images that haven
 
 ### Delete label:
 
-`c.delete_label(label_name=['Face_Present', 'Dog_Present']`
+`c.delete_label(label_name=['Face_Present', 'Dog_Present'])`
 
 Pass a list of column names to remove from the labels.csv file.
+
+### Update label file:
+
+`c.update_label_file()`
+
+If you remove or add images to your image directory, this is a method to update your label file. It will first report how many 
+images there are to be removed / added and get your permission to proceed. It will then drop / add rows to the label file and 
+resave the file. 
 
 ### Summary:
 
