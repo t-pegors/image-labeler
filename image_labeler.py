@@ -62,6 +62,35 @@ class Labels:
 
         print(f"Label { label_name } saved.")
 
+    def update_label_file(self):
+
+        imgs = self.get_filenames()
+        df_update = pd.DataFrame(imgs, columns=['filename'])
+
+        num_overlap = len(pd.merge(self.df, df_update, how='inner', on=['filename']))
+
+        if (len(self.df) - num_overlap) > 0:
+            num_removing = (len(self.df) - num_overlap)
+        else:
+            num_removing = 0
+        print(f'{num_removing} images will be removed.')
+
+        if (len(df_update) - num_overlap) > 0:
+            num_adding = (len(df_update) - num_overlap)
+        else:
+            num_adding = 0
+        print(f'{num_adding} images will be added.')
+
+        val = input(f"Are you sure you want to proceed? (y/n): ")
+        if val == "y":
+            self.df = pd.merge(self.df, df_update, how='right', on=['filename'])
+            self.image_filenames = self.df['filename']
+            self.num_images = len(self.df)
+            self.save_label_file()
+            print("Label file updated.")
+        else:
+            pass
+
     def resume_label(self, label_name, counter=False):
 
         if self.label_file_exist:
@@ -189,4 +218,5 @@ if __name__ == '__main__':
     c = Labels(path='YOUR_PATH_HERE')
     #c.create_label('Face', counter=True)
     #c.resume_label('Face', counter=True)
-    #print(c.df)
+    #c.update_label_file()
+
